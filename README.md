@@ -1,155 +1,146 @@
 # ELRICS Patient Management Portal
-## Technical Assessment
 
-Welcome to the **ELRICS Patient Management Portal** technical assessment frontend repository. This project is a foundational UI for a modern SaaS healthcare application, designed for candidates to demonstrate their backend engineering and full-stack integration skills.
+A hospital patient-management web app: a static HTML/CSS/vanilla-JS frontend (unchanged look and feel) backed by a
+**Java 17 / Spring Boot 3 / MySQL 8** REST API with JWT authentication.
 
-## Project Overview
-
-This repository contains the complete frontend UI for a Patient Management Dashboard. It has been built using HTML5, CSS3, and Vanilla JavaScript (ES6) without any modern frameworks or build tools to ensure maximum compatibility and simplicity.
-
-The frontend is fully designed and includes layout, styling, and basic DOM interactions (e.g., modals, form validation, toast notifications, loading states). 
-
-However, **there is no backend implementation**. 
-
-Your objective is to complete the application by implementing the required backend services and integrating them with the provided frontend while preserving the existing user interface.
-
-## Time Available
-
-**30 Minutes**
-
-## Folder Structure
+> Originally an assessment that asked for Django + DRF. By explicit request the backend is implemented in
+> Java/Spring Boot instead; the business requirements and the frontend are preserved.
 
 ```
 .
-├── README.md
-├── .gitignore
-├── login.html
-├── register.html
-├── dashboard.html
-├── patients.html
-├── assets/
-│   ├── logo.svg
-│   ├── avatar.png
-│   └── icons/
-├── css/
-│   ├── styles.css
-│   ├── layout.css
-│   ├── components.css
-│   └── responsive.css
-└── js/
-    ├── app.js
-    ├── services/
-    │   └── api.js
-    ├── pages/
-    │   ├── login.js
-    │   ├── register.js
-    │   ├── dashboard.js
-    │   └── patients.js
-    ├── components/
-    │   ├── modal.js
-    │   ├── table.js
-    │   ├── toast.js
-    │   ├── loader.js
-    │   └── sidebar.js
-    └── utils/
-        ├── helpers.js
-        ├── validation.js
-        └── constants.js
+├── (frontend)          login.html, register.html, dashboard.html, patients.html, css/, js/, assets/
+└── backend/            Spring Boot application (pom.xml, src/, .env.example, db/setup.sql)
 ```
 
-## Setup Instructions
+## Technology stack
 
-Since this is a static frontend project, there are no dependencies to install (no Node.js, no npm required).
+| Area | Choice |
+|---|---|
+| Language / runtime | Java 17 (Temurin 17.0.17+10) |
+| Framework | Spring Boot 3.3.5 (Web, Data JPA, Security, Validation) |
+| Build | Maven 3.9+ |
+| Database | MySQL 8.x, Spring Data JPA / Hibernate, Flyway migrations |
+| Auth | Spring Security, stateless JWT access token (jjwt 0.12.6), BCrypt |
+| API docs | springdoc-openapi (Swagger UI) |
+| Tests | JUnit 5, Mockito, Spring Boot Test / MockMvc |
+| Frontend | HTML5, CSS3, ES-module vanilla JS (no build step) |
 
-1. Clone or download this repository.
-2. Open the `patient-management` directory.
-3. Serve the HTML files using a static web server.
-    - Example using VS Code: Install the **Live Server** extension and click "Go Live" on `login.html`.
-    - Example using Python: Run `python -m http.server 8000` in the directory and navigate to `http://localhost:8000`.
+## Requirements
 
-## Business Requirements
+* JDK 17 (`java -version`) and Maven 3.9+ (`mvn -v`)
+* MySQL 8.x running locally
+* Any static web server for the frontend (Python is enough)
 
-The hospital requires a secure Patient Management Portal. Authorized administrators should be able to:
+## 1. Database setup
 
-1. **Register** to create an initial administrator account.
-2. **Log in** to access the dashboard.
-3. **View patient records** with relevant medical details.
-3. **Register new patients** capturing essential data.
-4. **Update patient information** when circumstances change.
-5. **Delete patient records** from the system.
-6. **Search patients** quickly.
+```bash
+# edit the password in backend/db/setup.sql first (CHANGE_ME), then:
+mysql -u root -p < backend/db/setup.sql
+```
 
-## Functional Requirements
+This creates database `elrics_portal` and user `elrics_user`. Tables are created by Flyway on first start
+(`backend/src/main/resources/db/migration/V1__init_schema.sql`). With `createDatabaseIfNotExist=true` the application
+can also create the empty database itself if its MySQL user has the privilege.
 
-At a minimum, the completed application should support:
-- User authentication
-- Patient registration
-- Viewing patient records
-- Editing patient details
-- Deleting patient records
-- Searching patients
-- Appropriate validation
-- Appropriate error handling
+## 2. Configuration
 
-## Backend Integration
+```bash
+cd backend
+cp .env.example .env      # then edit .env
+```
 
-Your backend will run separately from the provided frontend.
+| Variable | Purpose | Default |
+|---|---|---|
+| `DB_HOST`, `DB_PORT`, `DB_NAME` | MySQL location | `localhost`, `3306`, `elrics_portal` |
+| `DB_USERNAME` | MySQL user | `root` |
+| `DB_PASSWORD` | MySQL password | **required** |
+| `JWT_SECRET` | HMAC signing key, ≥ 32 characters (`openssl rand -base64 48`) | **required** |
+| `JWT_EXPIRATION_MS` | Access-token lifetime | `3600000` (1 h) |
+| `SERVER_PORT` | API port | `8080` |
+| `CORS_ALLOWED_ORIGINS` | Comma-separated frontend origins | `localhost`/`127.0.0.1` on 8000, 5500, 3000 |
+| `HIBERNATE_DDL_AUTO` | Schema handling | `validate` |
+| `SWAGGER_ENABLED` | Expose Swagger UI | `true` |
 
-Ensure that your frontend is able to communicate successfully with your backend during development.
+`.env` is git-ignored. Real environment variables work too and take precedence. **Never commit secrets.**
 
-You are responsible for configuring your application appropriately so that both components function together in your local development environment.
+## 3. Run the backend
 
-## Submission Guidelines
+```bash
+cd backend
+mvn spring-boot:run          # development
+# or
+mvn clean package && java -jar target/patient-portal-1.0.0.jar
+```
 
-1. You must integrate this exact frontend with your custom backend.
-2. The backend must be implemented using Python, Django, and Django REST Framework.
-3. Integrate the provided frontend with your backend implementation while maintaining the existing project structure.
+API: <http://localhost:8080/api> · Swagger UI: <http://localhost:8080/swagger-ui.html>
 
-## Deliverables
+## 4. Run the frontend
 
-Submit:
-- Source code
-- Git repository
-- README with setup instructions
-- Database migration files
-- Environment configuration template (`.env.example` if applicable)
+Serve the repository root over HTTP (opening the files with `file://` will not work because of ES modules and CORS):
 
-## Assumptions
+```bash
+python3 -m http.server 8000      # from the repository root
+```
 
-You may make reasonable assumptions where requirements are not explicitly defined. Document any assumptions in your README.
+Open <http://localhost:8000/login.html>. The API base URL is set in `js/utils/constants.js`
+(`http://localhost:8080/api`, or define `window.ELRICS_API_BASE_URL` before the scripts load). If you serve the frontend
+from another origin/port, add it to `CORS_ALLOWED_ORIGINS`.
 
-## General Rules & Expectations
+## Initial administrator & authentication flow
 
-- **Do not modify the overall UI/UX design.** You may add subtle improvements if necessary, but the core aesthetic must remain the same.
-- **Complete the application according to the business requirements.** Connect the provided frontend functions to your newly created backend.
-- **Initial Administrator:** The application should support creation of the initial administrator account before authentication.
-- **Data Persistence:** Ensure that users and patients are properly stored.
-- **Authentication:** Secure the application so unauthorized access is rejected.
-- **Git Workflow:** Maintain a clean commit history. Use meaningful commit messages that reflect logical development milestones. The repository history may be reviewed during evaluation.
+1. Open `register.html` ("Create Administrator Account") and register. **Only the first registration succeeds**; every
+   later attempt gets HTTP 403. This is enforced in the service layer and by a unique constraint in MySQL.
+2. Log in on `login.html` with the **username or email** and password → the API returns a JWT.
+3. The frontend stores the token (`sessionStorage`, or `localStorage` when "Remember me" is ticked) and sends
+   `Authorization: Bearer <token>` on every protected call.
+4. A 401 (expired/invalid token) clears the stored session and redirects to the login page. Logout clears the token.
+   Pages `dashboard.html` / `patients.html` redirect to login when no token exists; a browser refresh keeps the session.
 
-## External Resources
+## REST API
 
-You may use:
-- Official documentation
-- Search engines
-- AI coding assistants
-- Personal notes
+All routes except register/login/Swagger require a valid token. Errors always look like
+`{ "timestamp", "status", "error", "message", "errors": {field: message}, "path" }`.
 
-However, you must be able to explain every technical decision during the technical discussion.
+| Method & path | Description | Success |
+|---|---|---|
+| `POST /api/auth/register` | Create the initial admin (`fullName, email, username, password`) | 201 (403 if an admin exists) |
+| `POST /api/auth/login` | `{username, password}` (username or email) → `{token, tokenType, expiresInSeconds, user}` | 200 (401 bad credentials) |
+| `GET /api/auth/me` | Current administrator | 200 |
+| `POST /api/patients` | Create patient | 201 (400 invalid, 409 duplicate) |
+| `GET /api/patients` | List all patients, newest first | 200 |
+| `GET /api/patients/{id}` | Patient details | 200 (404) |
+| `PUT /api/patients/{id}` | Update patient | 200 (400, 404, 409) |
+| `DELETE /api/patients/{id}` | Delete patient | 204 (404) |
+| `GET /api/patients/search?query=` | Match name, patient ID, phone or email | 200 |
+| `GET /api/dashboard/stats` | `totalPatients, todaysAdmissions, pendingReviews, dischargedToday, currentlyAdmitted, recentActivity[]` | 200 |
 
-## Evaluation Criteria
+Missing/invalid token → **401**; authenticated without the `ADMIN` role → **403**.
 
-Your submission will be evaluated on:
-- Code quality
-- Project structure
-- Problem solving
-- Maintainability
-- Backend integration
-- Error handling
-- Data validation
-- Security considerations
-- API design
-- User experience
-- Ability to explain technical decisions
+**Patient fields** (match the form in `patients.html`): `fullName*, age* (0-150), gender* (Male|Female|Other),
+phone*, email, address, bloodGroup* (A+…O-), status (Pending|Admitted|Under Review|Discharged, default Pending),
+emergencyContact`. Responses use `id` = the generated public identifier (`PT-000001`), which is also the `{id}` in the paths.
+Duplicates are rejected on email and on the same full name + phone.
 
-Best of luck!
+## Testing
+
+```bash
+cd backend
+mvn clean test       # unit tests + (when MySQL is reachable) the end-to-end API test
+mvn clean package    # build the runnable jar (also runs the tests)
+```
+
+* Unit tests (no database needed): `JwtServiceTest`, `AuthServiceTest`, `PatientServiceTest`.
+* `ApiIntegrationTest` exercises the full flow (first admin only once, login, wrong password, 401s, patient CRUD, search,
+  dashboard stats) against a real MySQL schema. It uses database `elrics_portal_test` and the `TEST_DB_HOST/PORT/NAME/USERNAME/PASSWORD`
+  variables (defaults: `localhost:3306`, user `root`, empty password) and is **skipped automatically if MySQL is not reachable**.
+
+## Assumptions & known limitations
+
+* The frontend logs in and registers with a `username`, so users have `username` + `email` (both unique); login accepts either.
+* The patient form has no diagnosis field; `status` (Pending / Admitted / Under Review / Discharged) is the medical-state field.
+  "Today's admissions/discharges" are derived from timestamps recorded when a patient's status changes to Admitted/Discharged.
+* Patient lists are returned unpaginated (the frontend renders the full table).
+* Logout is client-side (stateless JWT, no server-side revocation list); tokens are valid until they expire. There is no refresh-token flow.
+* No login rate-limiting/lockout is implemented.
+* The token lives in browser storage, as the static frontend allows; keep the frontend free of XSS (all dynamic values are escaped).
+* Use HTTPS and a strong `JWT_SECRET` in any real deployment; consider turning Swagger off (`SWAGGER_ENABLED=false`).
