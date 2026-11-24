@@ -5,7 +5,9 @@ import { renderTable } from '../components/table.js';
 import { initializeSidebar } from '../components/sidebar.js';
 import * as api from '../services/api.js';
 
-// No fallback arrays used
+const SEARCH_DEBOUNCE_MS = 300;
+let latestRequest = 0;
+
 export function initPatients() {
     initializeSidebar();
     
@@ -18,13 +20,15 @@ export function initPatients() {
     loadPatients();
     
     if (refreshBtn) {
-        refreshBtn.addEventListener('click', loadPatients);
+        refreshBtn.addEventListener('click', () => loadPatients());
     }
 
     if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            const query = e.target.value.trim();
-            // Search functionality can be hooked here
+        let debounceTimer;
+        searchInput.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            // Silent: no full-screen overlay while the user is typing.
+            debounceTimer = setTimeout(() => loadPatients({ silent: true }), SEARCH_DEBOUNCE_MS);
         });
     }
 
@@ -37,6 +41,11 @@ export function initPatients() {
             if(patientIdInput) patientIdInput.value = '';
             openModal('patientModal');
         });
+    }
+
+    const closeBtn = document.querySelector('#patientModal .close-btn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => closeModal('patientModal'));
     }
 
     if (cancelModalBtn) {
@@ -67,7 +76,7 @@ export function initPatients() {
                 closeModal('patientModal');
                 await loadPatients();
             } catch (error) {
-                showToast('error', 'Error', 'Failed to save patient. Please try again.');
+                showToast('error', 'Error', error.message || 'Failed to save patient. Please try again.');
             } finally {
                 toggleLoading(false);
             }
@@ -75,24 +84,26 @@ export function initPatients() {
     }
 }
 
-async function loadPatients() {
+async function loadPatients({ silent = false } = {}) {
     const patientTableBody = document.getElementById('patientTableBody');
     const tableContainer = document.getElementById('tableContainer');
     const emptyState = document.getElementById('emptyState');
     const patientForm = document.getElementById('patientForm');
+    const searchInput = document.getElementById('searchPatient');
+    const query = searchInput ? searchInput.value.trim() : '';
+    const requestId = ++latestRequest;
     
     try {
-        toggleLoading(true, 'Loading Patients...');
-        const patients = await api.getPatients();
+        if (!silent) toggleLoading(true, query ? 'Searching Patients...' : 'Loading Patients...');
+        const patients = query ? await api.searchPatients(query) : await api.getPatients();
+        if (requestId !== latestRequest) return; // a newer search superseded this one
         renderTable(patientTableBody, tableContainer, emptyState, patients, loadPatients, patientForm);
     } catch (error) {
+        if (requestId !== latestRequest) return;
         tableContainer.style.display = 'none';
         emptyState.style.display = 'block';
-        
-        if (!error.message || !error.message.includes('Implement')) {
-            showToast('error', 'Error', error.message || 'Failed to load patients.');
-        }
+        showToast('error', 'Error', error.message || 'Failed to load patients.');
     } finally {
-        toggleLoading(false);
+        if (!silent) toggleLoading(false);
     }
 }

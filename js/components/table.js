@@ -1,7 +1,7 @@
 import { showToast } from './toast.js';
 import { openModal } from './modal.js';
 import { toggleLoading } from './loader.js';
-import { confirmAction } from '../utils/helpers.js';
+import { confirmAction, escapeHtml } from '../utils/helpers.js';
 import * as api from '../services/api.js';
 
 export function renderTable(patientTableBody, tableContainer, emptyState, currentPatients, onPatientsUpdated, patientForm) {
@@ -27,18 +27,18 @@ export function renderTable(patientTableBody, tableContainer, emptyState, curren
         if (patient.status === 'Under Review') statusBadgeClass = 'badge-warning';
 
         tr.innerHTML = `
-            <td><span class="font-medium text-main">${patient.id}</span></td>
-            <td>${patient.name}</td>
-            <td>${patient.age}</td>
-            <td>${patient.gender}</td>
-            <td>${patient.phone}</td>
-            <td><span class="font-medium">${patient.bloodGroup}</span></td>
-            <td><span class="badge ${statusBadgeClass}">${patient.status}</span></td>
+            <td><span class="font-medium text-main">${escapeHtml(patient.id)}</span></td>
+            <td>${escapeHtml(patient.fullName)}</td>
+            <td>${escapeHtml(patient.age)}</td>
+            <td>${escapeHtml(patient.gender)}</td>
+            <td>${escapeHtml(patient.phone)}</td>
+            <td><span class="font-medium">${escapeHtml(patient.bloodGroup)}</span></td>
+            <td><span class="badge ${statusBadgeClass}">${escapeHtml(patient.status)}</span></td>
             <td>
                 <div class="flex gap-2">
-                    <button class="btn btn-secondary btn-sm action-view" data-id="${patient.id}" title="View">👁️</button>
-                    <button class="btn btn-secondary btn-sm action-edit" data-id="${patient.id}" title="Edit">✏️</button>
-                    <button class="btn btn-danger-outline btn-sm action-delete" data-id="${patient.id}" title="Delete">🗑️</button>
+                    <button class="btn btn-secondary btn-sm action-view" data-id="${escapeHtml(patient.id)}" title="View">👁️</button>
+                    <button class="btn btn-secondary btn-sm action-edit" data-id="${escapeHtml(patient.id)}" title="Edit">✏️</button>
+                    <button class="btn btn-danger-outline btn-sm action-delete" data-id="${escapeHtml(patient.id)}" title="Delete">🗑️</button>
                 </div>
             </td>
         `;
@@ -51,9 +51,21 @@ export function renderTable(patientTableBody, tableContainer, emptyState, curren
 
 function attachTableActions(currentPatients, onPatientsUpdated, patientForm) {
     document.querySelectorAll('.action-view').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', async (e) => {
             const id = e.currentTarget.getAttribute('data-id');
-            showToast('info', 'View', `View patient details for ${id}`);
+            try {
+                toggleLoading(true, 'Loading Patient...');
+                const p = await api.getPatient(id);
+                const details = [
+                    `${p.age} yrs`, p.gender, p.bloodGroup, p.phone, p.email || 'no email',
+                    p.address || 'no address', `Emergency: ${p.emergencyContact || 'n/a'}`, p.status
+                ].map(escapeHtml).join(' · ');
+                showToast('info', `${escapeHtml(p.fullName)} (${escapeHtml(p.id)})`, details);
+            } catch (error) {
+                showToast('error', 'Error', error.message || 'Failed to load patient details.');
+            } finally {
+                toggleLoading(false);
+            }
         });
     });
 
@@ -74,12 +86,15 @@ function attachTableActions(currentPatients, onPatientsUpdated, patientForm) {
             const patient = currentPatients.find(p => p.id === id);
             if (patient) {
                 const formElements = patientForm.elements;
-                if(formElements['fullName']) formElements['fullName'].value = patient.name;
-                if(formElements['age']) formElements['age'].value = patient.age;
-                if(formElements['gender']) formElements['gender'].value = patient.gender;
-                if(formElements['phone']) formElements['phone'].value = patient.phone;
-                if(formElements['bloodGroup']) formElements['bloodGroup'].value = patient.bloodGroup;
-                if(formElements['status']) formElements['status'].value = patient.status;
+                if(formElements['fullName']) formElements['fullName'].value = patient.fullName ?? '';
+                if(formElements['age']) formElements['age'].value = patient.age ?? '';
+                if(formElements['gender']) formElements['gender'].value = patient.gender ?? '';
+                if(formElements['phone']) formElements['phone'].value = patient.phone ?? '';
+                if(formElements['email']) formElements['email'].value = patient.email ?? '';
+                if(formElements['bloodGroup']) formElements['bloodGroup'].value = patient.bloodGroup ?? '';
+                if(formElements['status']) formElements['status'].value = patient.status ?? 'Pending';
+                if(formElements['address']) formElements['address'].value = patient.address ?? '';
+                if(formElements['emergencyContact']) formElements['emergencyContact'].value = patient.emergencyContact ?? '';
             }
             
             openModal('patientModal');
@@ -94,12 +109,12 @@ function attachTableActions(currentPatients, onPatientsUpdated, patientForm) {
                 try {
                     toggleLoading(true, 'Deleting...');
                     await api.deletePatient(id);
-                    showToast('success', 'Deleted', `Patient record ${id} has been deleted.`);
+                    showToast('success', 'Deleted', `Patient record ${escapeHtml(id)} has been deleted.`);
                     if (typeof onPatientsUpdated === 'function') {
                         await onPatientsUpdated();
                     }
                 } catch (error) {
-                    showToast('error', 'Error', 'Failed to delete patient.');
+                    showToast('error', 'Error', error.message || 'Failed to delete patient.');
                 } finally {
                     toggleLoading(false);
                 }

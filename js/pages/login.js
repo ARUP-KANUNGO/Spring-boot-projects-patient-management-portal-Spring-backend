@@ -12,6 +12,7 @@ export function initLogin() {
             
             const usernameInput = document.getElementById('username');
             const passwordInput = document.getElementById('password');
+            const rememberInput = document.getElementById('rememberMe');
             
             const username = usernameInput.value.trim();
             const password = passwordInput.value;
@@ -28,7 +29,7 @@ export function initLogin() {
             try {
                 toggleLoading(true, 'Authenticating...');
                 
-                await api.login({ username, password });
+                await api.login({ username, password, remember: Boolean(rememberInput && rememberInput.checked) });
                 showToast('success', 'Login Successful', 'Welcome back!');
                 
                 setTimeout(() => {
@@ -36,11 +37,7 @@ export function initLogin() {
                 }, 1000);
                 
             } catch (error) {
-                if (error.message && error.message.includes('Implement')) {
-                    showToast('info', 'Backend Not Connected', 'Please implement the login API to continue.');
-                } else {
-                    showToast('error', 'Login Failed', error.message || 'Invalid credentials. Please try again.');
-                }
+                showToast('error', 'Login Failed', error.message || 'Invalid credentials. Please try again.');
             } finally {
                 toggleLoading(false);
             }

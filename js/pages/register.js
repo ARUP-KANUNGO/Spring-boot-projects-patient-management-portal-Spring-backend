@@ -41,11 +41,7 @@ export function initRegister() {
                 }, 1500);
                 
             } catch (error) {
-                if (error.message && error.message.includes('Implement')) {
-                    showToast('info', 'Backend Not Connected', 'Please implement the register API to continue.');
-                } else {
-                    showToast('error', 'Registration Failed', error.message || 'An error occurred during registration.');
-                }
+                showToast('error', 'Registration Failed', error.message || 'An error occurred during registration.');
             } finally {
                 toggleLoading(false);
             }

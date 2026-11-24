@@ -69,28 +69,28 @@
                         <div class="stat-icon primary">👥</div>
                         <div class="stat-details">
                             <h3>Total Patients</h3>
-                            <div class="value">1,248</div>
+                            <div class="value" id="statTotalPatients">–</div>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon success">🏥</div>
                         <div class="stat-details">
                             <h3>Today's Admissions</h3>
-                            <div class="value">14</div>
+                            <div class="value" id="statTodaysAdmissions">–</div>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon warning">📝</div>
                         <div class="stat-details">
                             <h3>Pending Reviews</h3>
-                            <div class="value">23</div>
+                            <div class="value" id="statPendingReviews">–</div>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon danger">👋</div>
                         <div class="stat-details">
                             <h3>Discharged Today</h3>
-                            <div class="value">8</div>
+                            <div class="value" id="statDischargedToday">–</div>
                         </div>
                     </div>
                 </div>
@@ -102,36 +102,8 @@
                             <h2 class="text-lg">Recent Activity</h2>
                             <a href="#" class="text-sm">View all</a>
                         </div>
-                        <div class="activity-list">
-                            <div class="activity-item">
-                                <div class="activity-bullet" style="background-color: var(--success);"></div>
-                                <div class="activity-content">
-                                    <p><strong>Jane Smith</strong> was discharged from Ward A.</p>
-                                    <span>10 minutes ago</span>
-                                </div>
+                        <div class="activity-list" id="activityList">
                             </div>
-                            <div class="activity-item">
-                                <div class="activity-bullet" style="background-color: var(--danger);"></div>
-                                <div class="activity-content">
-                                    <p><strong>Michael Wilson</strong> was admitted to ICU.</p>
-                                    <span>2 hours ago</span>
-                                </div>
-                            </div>
-                            <div class="activity-item">
-                                <div class="activity-bullet" style="background-color: var(--primary);"></div>
-                                <div class="activity-content">
-                                    <p>New patient <strong>Robert Johnson</strong> registered by Admin.</p>
-                                    <span>3 hours ago</span>
-                                </div>
-                            </div>
-                            <div class="activity-item">
-                                <div class="activity-bullet" style="background-color: var(--warning);"></div>
-                                <div class="activity-content">
-                                    <p>Pending lab results for <strong>Emily Davis</strong> updated.</p>
-                                    <span>5 hours ago</span>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
                     <!-- Quick Actions -->
