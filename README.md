@@ -1,10 +1,7 @@
-# ELRICS Patient Management Portal
+# Patient Management Portal
 
 A hospital patient-management web app: a static HTML/CSS/vanilla-JS frontend (unchanged look and feel) backed by a
 **Java 17 / Spring Boot 3 / MySQL 8** REST API with JWT authentication.
-
-> Originally an assessment that asked for Django + DRF. By explicit request the backend is implemented in
-> Java/Spring Boot instead; the business requirements and the frontend are preserved.
 
 ```
 .
